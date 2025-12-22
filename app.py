@@ -105,25 +105,38 @@ competicao_selecionada = st.sidebar.selectbox("🏆 Competição:", lista_compet
 
 df_comp = df_temp[df_temp['Competição'] == competicao_selecionada].copy()
 
-# C. Filtro de Rodadas
+# --- C. Filtro de Rodadas (Nível 3) ---
+
+# 1. Verificação de Segurança: Existe algum dado para esta competição/ano?
+# Se o dataframe estiver vazio OU se a coluna Rodada só tiver valores vazios (NaN)
+if df_comp.empty or 'Rodada' not in df_comp.columns or df_comp['Rodada'].isnull().all():
+    st.markdown("### 🔮 Calma, torcedor!")
+    st.warning(f"A bola ainda não rolou pela **{competicao_selecionada}** na temporada **{temporada_selecionada}**. Volte mais tarde! ⚽")
+    st.stop() # Para a execução aqui, evitando o erro lá embaixo
+
+# 2. Se passou da verificação acima, é porque tem dados. Vamos criar o slider.
 if 'Rodada' in df_comp.columns:
+    # Converte para inteiros garantindo que ignora erros
     min_rodada = int(df_comp['Rodada'].min())
     max_rodada = int(df_comp['Rodada'].max())
-
+    
+    # Se só houver 1 rodada, ajusta para não dar erro no slider
     if min_rodada == max_rodada:
         rodada_inicio, rodada_fim = min_rodada, max_rodada
+        st.sidebar.info(f"Rodada Única disponível: {min_rodada}")
     else:
         rodada_inicio, rodada_fim = st.sidebar.slider(
-            "🔢 Rodadas:",
+            "🔢 Intervalo de Rodadas:",
             min_value=min_rodada,
             max_value=max_rodada,
             value=(min_rodada, max_rodada)
         )
-
+    
+    # Filtra pelas rodadas
     df_filtrado = df_comp[(df_comp['Rodada'] >= rodada_inicio) & (df_comp['Rodada'] <= rodada_fim)].copy()
 else:
+    # Caso raro onde tem dados mas não tem a coluna Rodada
     df_filtrado = df_comp.copy()
-
 
 # --- 5. PROCESSAMENTO DOS DADOS ---
 def processar_jogos(df):
@@ -275,3 +288,4 @@ with tab2:
             use_container_width=True
 
         )
+
