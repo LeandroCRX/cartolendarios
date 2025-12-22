@@ -289,3 +289,11 @@ with tab2:
 
         )
 
+
+# --- RODAPÉ COM LINK ---
+st.sidebar.markdown("---")
+st.sidebar.caption("Mantido pela Diretoria: Elielton, Gil, Leandro, Léo e Welington 🛠️")
+st.sidebar.markdown(
+    "Desenvolvido por [**Leandro Costa Rocha**](https://www.linkedin.com/in/leandro-costa-rocha-b40189b0/)",
+    unsafe_allow_html=True
+)
