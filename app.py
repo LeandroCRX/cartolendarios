@@ -177,7 +177,7 @@ if df_final.empty:
     st.stop()
 
 # --- 6. VISUALIZAÇÃO ---
-tab1, tab2 = st.tabs(["📊 Tabela da Liga", "🔎 Raio-X do Time"])
+tab1, tab2 = st.tabs(["📊 Tabela do Torneio", "🔎 Raio-X do Time"])
 
 # ABA 1: TABELA GERAL
 with tab1:
@@ -300,6 +300,7 @@ st.sidebar.markdown(
     "Desenvolvido por [**Leandro Costa Rocha**](https://www.linkedin.com/in/leandro-costa-rocha-b40189b0/)",
     unsafe_allow_html=True
 )
+
 
 
 
