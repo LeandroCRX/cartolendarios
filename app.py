@@ -35,62 +35,50 @@ with st.sidebar.expander("Área Restrita (Admin)", expanded=False):
 @st.cache_data
 def carregar_dados(caminho_ou_arquivo):
     try:
-        # Se for string (caminho do arquivo padrão)
         if isinstance(caminho_ou_arquivo, str):
-            if not os.path.exists(caminho_ou_arquivo):
-                return None
-            if caminho_ou_arquivo.endswith('.csv'):
-                df = pd.read_csv(caminho_ou_arquivo)
-            else:
-                df = pd.read_excel(caminho_ou_arquivo)
-        # Se for objeto (arquivo do uploader)
+            if not os.path.exists(caminho_ou_arquivo): return None
+            df = pd.read_excel(caminho_ou_arquivo) if not caminho_ou_arquivo.endswith('.csv') else pd.read_csv(caminho_ou_arquivo)
         else:
-            if caminho_ou_arquivo.name.endswith('.csv'):
-                df = pd.read_csv(caminho_ou_arquivo)
-            else:
-                df = pd.read_excel(caminho_ou_arquivo)
-
-        # --- TRATAMENTO E LIMPEZA ---
+            df = pd.read_excel(caminho_ou_arquivo) if not caminho_ou_arquivo.name.endswith('.csv') else pd.read_csv(caminho_ou_arquivo)
+        
+        # Limpeza e Padronização
         df.columns = df.columns.str.strip()
-
-        # Mapeamentos de nomes
-        if 'Competição' not in df.columns and 'Competicao' in df.columns:
-            df.rename(columns={'Competicao': 'Competição'}, inplace=True)
-        if 'Temporada' not in df.columns and 'Ano' in df.columns:
-            df.rename(columns={'Ano': 'Temporada'}, inplace=True)
-
-        # Colunas padrão
+        
+        # Renomear colunas se necessário
+        cols_map = {'Competicao': 'Competição', 'Ano': 'Temporada'}
+        df.rename(columns=cols_map, inplace=True)
+        
+        # Criar colunas padrão se não existirem
         if 'Competição' not in df.columns: df['Competição'] = 'Geral'
-        if 'Temporada' not in df.columns: df['Temporada'] = 2025
-
+        if 'Temporada' not in df.columns: df['Temporada'] = datetime.now().year
+            
+        # --- LIMPEZA CRÍTICA DE 'NAN' ---
+        # 1. Remove linhas onde a Temporada ou Competição estão vazias
+        df = df.dropna(subset=['Temporada', 'Competição'])
+        
+        # 2. Converte para string e remove ".0" (ex: 2025.0 vira 2025)
         df['Temporada'] = df['Temporada'].astype(str).str.replace(r'\.0$', '', regex=True)
-
+        
+        # 3. Garante que não sobrou nenhum texto "nan"
+        df = df[df['Temporada'].str.lower() != 'nan']
+        df = df[df['Competição'].str.lower() != 'nan']
+            
         return df
     except Exception as e:
         return None
 
-
-# DECISÃO: Carregar do Upload ou do Arquivo Padrão?
+# Carrega os dados (Prioridade: Upload > Arquivo Padrão)
 df_bruto = None
-
-# 1. Prioridade: Se o admin subiu um arquivo agora, usa ele.
-if arquivo_upload is not None:
+if arquivo_upload:
     df_bruto = carregar_dados(arquivo_upload)
-    st.toast("Usando arquivo carregado manualmente!", icon="📂")
-
-# 2. Se não tem upload, tenta ler o arquivo padrão da pasta
 elif os.path.exists(ARQUIVO_PADRAO):
     df_bruto = carregar_dados(ARQUIVO_PADRAO)
 
-# Se não encontrou nada
 if df_bruto is None:
-    st.info("👋 Olá! Aguardando o administrador carregar os dados da liga.")
-    if senha_inserida != SENHA_ADMIN:
-        st.stop()  # Para usuários normais, para aqui.
-    else:
-        st.warning(f"O arquivo '{ARQUIVO_PADRAO}' não foi encontrado na pasta e nenhum upload foi feito.")
-        st.stop()
-
+    st.info("👋 Olá! Aguardando dados da liga.")
+    if senha_inserida == SENHA_ADMIN:
+         st.warning(f"Arquivo '{ARQUIVO_PADRAO}' não encontrado.")
+    st.stop()
 # --- 4. FILTROS EM CASCATA ---
 
 # A. Filtro de Temporada
@@ -109,7 +97,7 @@ df_comp = df_temp[df_temp['Competição'] == competicao_selecionada].copy()
 
 # 1. Verificação de Segurança: Existe algum dado para esta competição/ano?
 # Se o dataframe estiver vazio OU se a coluna Rodada só tiver valores vazios (NaN)
-if df_comp.empty or 'Rodada' not in df_comp.columns or df_comp['Rodada'].isnull().all():
+if df_comp.empty or 'Rodada' not in df_comp.columns or df_comp['Rodada'].isnull().all():    
     st.markdown("### 🔮 Calma, torcedor!")
     st.warning(f"A bola ainda não rolou pela **{competicao_selecionada}** na temporada **{temporada_selecionada}**. Volte mais tarde! ⚽")
     st.stop() # Para a execução aqui, evitando o erro lá embaixo
@@ -220,9 +208,12 @@ with tab1:
         'Vitorias': 'V', 'Empates': 'E', 'Derrotas': 'D'
     })
 
+    # AQUI ESTÁ A ALTERAÇÃO DA ABA 1: Centralizar tudo
     st.dataframe(
-        tabela_show.style.format({'Pts Cartola': '{:.2f}'})
-        .background_gradient(subset=['Pontos'], cmap='Greens'),
+        tabela_show.style
+        .format({'Pts Cartola': '{:.2f}'})
+        .background_gradient(subset=['Pontos'], cmap='Greens')
+        .set_properties(**{'text-align': 'center'}), # <--- Centraliza TODAS as colunas
         use_container_width=True,
         hide_index=True,
         height=600
@@ -271,22 +262,31 @@ with tab2:
         df_historico['Status'] = df_historico['Resultado'].map({'V': 'VITÓRIA', 'E': 'EMPATE', 'D': 'DERROTA'})
         df_historico['Icone'] = df_historico['Resultado'].map({'V': '✅', 'E': '➖', 'D': '❌'})
 
+        # Selecionar e renomear colunas
+        # A coluna vazia '' é o Ícone
         df_historico = df_historico[['Rodada', 'Icone', 'Status', 'Pontuacao_Feita', 'Pontuacao_Adv', 'Adversario']]
         df_historico.columns = ['Rodada', '', 'Resultado', 'Sua Pont.', 'Pont. Adv.', 'Adversário']
-
 
         def cor_resultado(val):
             if val == 'VITÓRIA': return 'color: green; font-weight: bold;'
             if val == 'DERROTA': return 'color: red; font-weight: bold;'
             return 'color: orange; font-weight: bold;'
 
+        # AQUI ESTÃO AS ALTERAÇÕES DA ABA 2
+        # Definimos quais colunas queremos centralizar
+        colunas_centralizadas = ['Rodada', '', 'Resultado', 'Sua Pont.', 'Pont. Adv.']
 
         st.dataframe(
-            df_historico.style.format({'Sua Pont.': '{:.2f}', 'Pont. Adv.': '{:.2f}'})
-            .applymap(cor_resultado, subset=['Resultado']),
+            df_historico.style
+            .format({
+                'Sua Pont.': '{:.2f}', 
+                'Pont. Adv.': '{:.2f}',
+                'Rodada': '{:.0f}' # <--- Remove as casas decimais (1.0 vira 1)
+            })
+            .applymap(cor_resultado, subset=['Resultado'])
+            .set_properties(subset=colunas_centralizadas, **{'text-align': 'center'}), # <--- Centraliza as específicas
             hide_index=True,
             use_container_width=True
-
         )
 
 
@@ -301,4 +301,5 @@ st.sidebar.markdown(
     "Desenvolvido por [**Leandro Costa Rocha**](https://www.linkedin.com/in/leandro-costa-rocha-b40189b0/)",
     unsafe_allow_html=True
 )
+
 
