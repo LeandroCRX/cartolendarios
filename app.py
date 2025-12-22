@@ -9,10 +9,12 @@ st.title("🎩 Cartolendários")
 
 # --- 2. CONFIGURAÇÕES DE ACESSO E DADOS ---
 
-# Defina aqui o nome do arquivo que está na pasta do projeto (GitHub)
 ARQUIVO_PADRAO = "dados_campeonato.xlsx"
-# Defina uma senha simples para liberar o upload
-SENHA_ADMIN = "admin123"
+try:
+    SENHA_ADMIN = st.secrets["SENHA_ADMIN"]
+except FileNotFoundError:
+    # Caso esteja rodando localmente sem configurar os secrets
+    SENHA_ADMIN = "admin_local"
 
 st.sidebar.header("⚙️ Filtros")
 
@@ -271,4 +273,5 @@ with tab2:
             .applymap(cor_resultado, subset=['Resultado']),
             hide_index=True,
             use_container_width=True
+
         )
