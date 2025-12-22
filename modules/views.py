@@ -38,16 +38,29 @@ def exibir_raio_x(df_res):
     with c2:
         dft = df_res[df_res['Time'] == t_sel].sort_values('Rodada')
         
-        # Cards
+        # 1. Cards de Pontuação Geral
         k1, k2, k3, k4 = st.columns(4)
         k1.metric("Pontos", dft['Pts'].sum())
         k2.metric("Média", f"{dft['Placar'].mean():.2f}")
         k3.metric("Jogos", len(dft))
         apr = (dft['Pts'].sum()/(len(dft)*3))*100 if len(dft)>0 else 0
         k4.metric("Aprov.", f"{apr:.1f}%")
+        
         st.divider()
         
-        # Histórico Visual
+        # 2. Cards de Resultado (V/E/D) - O QUE ESTAVA FALTANDO
+        vitorias = len(dft[dft['Res']=='V'])
+        empates = len(dft[dft['Res']=='E'])
+        derrotas = len(dft[dft['Res']=='D'])
+        
+        j1, j2, j3 = st.columns(3)
+        j1.metric("✅ Vitórias", vitorias)
+        j2.metric("➖ Empates", empates)
+        j3.metric("❌ Derrotas", derrotas)
+        
+        st.divider()
+        
+        # 3. Histórico Visual
         st.markdown("#### 📜 Histórico")
         hist = dft[['Rodada', 'Res', 'Placar', 'Placar_Adv', 'Adv']].copy()
         hist['Icone'] = hist['Res'].map({'V': '✅', 'E': '➖', 'D': '❌'})
@@ -69,19 +82,19 @@ def exibir_raio_x(df_res):
 
 def exibir_top_escalacoes(df_esc_ok, t_sel_aba2, sel_comp):
     if df_esc_ok.empty:
-        st.info("⚠️ Carregue o arquivo 'dados_escalacoes.xlsx'.")
+        st.info("⚠️ Carregue o arquivo 'dados_escalacoes.xlsx' para ver esta análise.")
         return
 
     st.markdown(f"### 🎨 Painel Visual: {sel_comp}")
     
-    # Treemaps (Lógica simplificada para caber aqui)
+    # Treemaps
     df_tree = df_esc_ok.groupby(['Atleta', 'Posição']).size().reset_index(name='Escalações').sort_values('Escalações', ascending=False).head(50)
     
     if not df_tree.empty:
-        fig = px.treemap(df_tree, path=['Posição', 'Atleta'], values='Escalações', color='Escalações', color_continuous_scale='Blues')
+        fig = px.treemap(df_tree, path=['Posição', 'Atleta'], values='Escalações', color='Escalações', color_continuous_scale='Blues', title='Atletas mais escalados')
         st.plotly_chart(fig, use_container_width=True)
 
-    # Tabelas Comparativas (Resumido para o exemplo)
+    # Tabelas Comparativas
     st.divider()
     st.markdown("### ⚔️ Comparativo")
     
@@ -89,5 +102,33 @@ def exibir_top_escalacoes(df_esc_ok, t_sel_aba2, sel_comp):
     idx_t = times_esc.index(t_sel_aba2) if t_sel_aba2 in times_esc else 0
     time_foco = st.selectbox("Analisar Time:", times_esc, index=idx_t)
     
-    # ... (Aqui entraria o loop das posições e capitães que já tens)
-    st.caption("Detalhes de Goleiros, Laterais, etc...")
+    st.divider()
+
+    def get_top5(df_input, posicao):
+        df_pos = df_input[df_input['Posição'] == posicao]
+        top = df_pos['Atleta'].value_counts().reset_index()
+        top.columns = ['Atleta', 'Qtd']
+        top = top.head(5)
+        top['Qtd'] = top['Qtd'].astype(str)
+        return top
+
+    posicoes = ['Goleiro', 'Lateral', 'Zagueiro', 'Meia', 'Atacante', 'Técnico']
+    df_time_foco = df_esc_ok[df_esc_ok['Time'] == time_foco]
+    df_geral = df_esc_ok.copy()
+
+    for pos in posicoes:
+        c1, c2 = st.columns(2)
+        with c1:
+            st.markdown(f"**{pos}s - {time_foco}**")
+            df_show = get_top5(df_time_foco, pos)
+            if not df_show.empty:
+                st.dataframe(df_show.style.set_properties(**{'text-align': 'center'}), use_container_width=True, hide_index=True)
+            else:
+                st.caption("Nenhum escalado.")
+        
+        with c2:
+            st.markdown(f"**{pos}s - Tendência da Liga**")
+            df_show_g = get_top5(df_geral, pos)
+            if not df_show_g.empty:
+                st.dataframe(df_show_g.style.set_properties(**{'text-align': 'center'}), use_container_width=True, hide_index=True)
+        st.divider()
