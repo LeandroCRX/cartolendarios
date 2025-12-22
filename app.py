@@ -205,10 +205,10 @@ with tab1:
     colunas_finais = ['Pos', 'Time', 'Pontos', 'Vitorias', 'Empates', 'Derrotas', 'Pontuacao_Total', 'Jogos']
     tabela_show = tabela_detalhada[colunas_finais].rename(columns={
         'Pontuacao_Total': 'Pts Cartola',
-        'Vitorias': 'V', 'Empates': 'E', 'Derrotas': 'D'
+        'Vitorias': 'Vitórias', 'Empates': 'Empates', 'Derrotas': 'Derrotas'
     })
 
-    # AQUI ESTÁ A ALTERAÇÃO DA ABA 1: Centralizar tudo
+    # Centralizar tudo
     st.dataframe(
         tabela_show.style
         .format({'Pts Cartola': '{:.2f}'})
@@ -272,7 +272,6 @@ with tab2:
             if val == 'DERROTA': return 'color: red; font-weight: bold;'
             return 'color: orange; font-weight: bold;'
 
-        # AQUI ESTÃO AS ALTERAÇÕES DA ABA 2
         # Definimos quais colunas queremos centralizar
         colunas_centralizadas = ['Rodada', '', 'Resultado', 'Sua Pont.', 'Pont. Adv.']
 
@@ -301,5 +300,6 @@ st.sidebar.markdown(
     "Desenvolvido por [**Leandro Costa Rocha**](https://www.linkedin.com/in/leandro-costa-rocha-b40189b0/)",
     unsafe_allow_html=True
 )
+
 
 
