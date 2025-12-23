@@ -109,7 +109,13 @@ with tab3:
 
 
 # --- RODAPÉ COM LINK ---
-st.sidebar.markdown(\n*8)
+st.sidebar.markdown("")
+st.sidebar.markdown("")
+st.sidebar.markdown("")
+st.sidebar.markdown("")
+st.sidebar.markdown("")
+st.sidebar.markdown("")
+st.sidebar.markdown("")
 st.sidebar.markdown("---")
 st.sidebar.caption("Mantido pela Diretoria: Elielton, Gil, Leandro, Léo e Welington 🛠️")
 st.sidebar.markdown(
@@ -117,6 +123,7 @@ st.sidebar.markdown(
     unsafe_allow_html=True
 )
 st.sidebar.caption("v1.0 - Cartolendários")
+
 
 
 
