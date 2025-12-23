@@ -10,12 +10,11 @@ def processar_jogos(df):
             if cm not in r: cm = 'Pontuacao_Mandante'
             if cv not in r: cv = 'Pontuacao_Visitante'
             
-            # Garante numérico
-            pm = float(r[cm])
-            pv = float(r[cv])
+            pm = float(r[cm]) if pd.notnull(r[cm]) else 0.0
+            pv = float(r[cv]) if pd.notnull(r[cv]) else 0.0
+            
             diff = abs(pm - pv)
             
-            # A Regra
             if diff <= 3:
                 rm, rv = (1, 'E'), (1, 'E')
             elif pm > pv:
@@ -33,21 +32,17 @@ def processar_jogos(df):
         
     return pd.DataFrame(lst)
 
-def processar_escalacoes(df_esc, temporada, r_ini, r_fim, times_validos=None):
-    """Filtra as escalações conforme os parâmetros."""
-    if df_esc is None: return pd.DataFrame()
+def filtrar_escalacoes(df_esc, temporada, r_ini, r_fim):
+    """Filtra as escalações por temporada e rodada."""
+    if df_esc is None or df_esc.empty: return pd.DataFrame()
     
     try:
-        mapa = {'Nome': 'Atleta', 'Posicao': 'Posição', 'Time Cartola': 'Time', 
-                'ime Cartola': 'Time', 'Capitão': 'Capitao', 'Ano': 'Temporada'}
-        df = df_esc.rename(columns=mapa).copy()
-        
-        df['Temporada'] = df['Temporada'].astype(str).str.replace(r'\.0$', '', regex=True)
+        df = df_esc.copy()
+        # Filtra Temporada
         df = df[df['Temporada'] == temporada]
-        df = df[(df['Rodada'] >= r_ini) & (df['Rodada'] <= r_fim)]
-        
-        if times_validos is not None:
-            df = df[df['Time'].isin(times_validos)]
+        # Filtra Rodadas
+        if 'Rodada' in df.columns:
+            df = df[(df['Rodada'] >= r_ini) & (df['Rodada'] <= r_fim)]
             
         return df
     except:
