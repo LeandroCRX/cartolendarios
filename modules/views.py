@@ -38,29 +38,26 @@ def exibir_raio_x(df_res):
     with c2:
         dft = df_res[df_res['Time'] == t_sel].sort_values('Rodada')
         
-        # 1. Cards de Pontuação Geral
+        # Cards Gerais
         k1, k2, k3, k4 = st.columns(4)
         k1.metric("Pontos", dft['Pts'].sum())
         k2.metric("Média", f"{dft['Placar'].mean():.2f}")
         k3.metric("Jogos", len(dft))
         apr = (dft['Pts'].sum()/(len(dft)*3))*100 if len(dft)>0 else 0
         k4.metric("Aprov.", f"{apr:.1f}%")
-        
         st.divider()
         
-        # 2. Cards de Resultado (V/E/D) - O QUE ESTAVA FALTANDO
+        # Cards Resultado (V/E/D)
         vitorias = len(dft[dft['Res']=='V'])
         empates = len(dft[dft['Res']=='E'])
         derrotas = len(dft[dft['Res']=='D'])
-        
         j1, j2, j3 = st.columns(3)
         j1.metric("✅ Vitórias", vitorias)
         j2.metric("➖ Empates", empates)
         j3.metric("❌ Derrotas", derrotas)
-        
         st.divider()
         
-        # 3. Histórico Visual
+        # Histórico Visual
         st.markdown("#### 📜 Histórico")
         hist = dft[['Rodada', 'Res', 'Placar', 'Placar_Adv', 'Adv']].copy()
         hist['Icone'] = hist['Res'].map({'V': '✅', 'E': '➖', 'D': '❌'})
@@ -86,17 +83,50 @@ def exibir_top_escalacoes(df_esc_ok, t_sel_aba2, sel_comp):
         return
 
     st.markdown(f"### 🎨 Painel Visual: {sel_comp}")
+    st.caption("O tamanho do quadrado representa a quantidade de escalações.")
     
-    # Treemaps
+    # 1. Preparar Dados dos Jogadores
     df_tree = df_esc_ok.groupby(['Atleta', 'Posição']).size().reset_index(name='Escalações').sort_values('Escalações', ascending=False).head(50)
     
+    # 2. Preparar Dados dos Capitães
+    df_cap_tree = df_esc_ok[df_esc_ok['Capitao'].astype(str).str.contains('CAP', case=False, na=False)]
+    df_cap_tree = df_cap_tree['Atleta'].value_counts().reset_index()
+    df_cap_tree.columns = ['Atleta', 'Vezes']
+    df_cap_tree = df_cap_tree.head(30)
+
+    # --- GRÁFICO 1: JOGADORES (AZUL) ---
+    st.subheader("🔥 Os Queridinhos da Rodada")
     if not df_tree.empty:
-        fig = px.treemap(df_tree, path=['Posição', 'Atleta'], values='Escalações', color='Escalações', color_continuous_scale='Blues', title='Atletas mais escalados')
+        fig = px.treemap(
+            df_tree, 
+            path=['Posição', 'Atleta'], 
+            values='Escalações', 
+            color='Escalações', 
+            color_continuous_scale='Blues'
+        )
+        fig.update_traces(textinfo="label+value")
+        fig.update_layout(margin=dict(t=10, l=0, r=0, b=0))
         st.plotly_chart(fig, use_container_width=True)
 
-    # Tabelas Comparativas
+    # --- GRÁFICO 2: CAPITÃES (LARANJA) ---
+    st.subheader("©️ Top Capitães")
+    if not df_cap_tree.empty:
+        fig_caps = px.treemap(
+            df_cap_tree, 
+            path=['Atleta'], 
+            values='Vezes',
+            color='Vezes',
+            color_continuous_scale='Oranges'
+        )
+        fig_caps.update_traces(textinfo="label+value")
+        fig_caps.update_layout(margin=dict(t=10, l=0, r=0, b=0))
+        st.plotly_chart(fig_caps, use_container_width=True)
+    else:
+        st.warning("Sem dados de capitães para exibir.")
+
+    # --- TABELAS COMPARATIVAS ---
     st.divider()
-    st.markdown("### ⚔️ Comparativo")
+    st.markdown("### ⚔️ Comparativo Detalhado")
     
     times_esc = sorted(df_esc_ok['Time'].unique())
     idx_t = times_esc.index(t_sel_aba2) if t_sel_aba2 in times_esc else 0
