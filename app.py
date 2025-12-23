@@ -4,7 +4,7 @@ import os
 # Importa os módulos (Garante que a pasta modules tem o __init__.py e home.py)
 from modules import data, utils, views, home
 
-# 1. Configuração da Página (Deve ser sempre a primeira linha do Streamlit)
+# 1. Configuração da Página
 st.set_page_config(page_title="Cartolendários", page_icon="🎩", layout="wide")
 
 # Inicializa o estado da página (Navegação)
@@ -16,45 +16,49 @@ def executar_sistema():
     # --- 🎨 ESTILO CSS (Laranja na Sidebar) ---
     st.markdown("""
         <style>
-        /* Altera a cor de fundo da Sidebar */
         [data-testid="stSidebar"] {
             background-color: #FF8C00;
         }
-        /* Ajusta a cor do texto na sidebar para branco (opcional, para contraste) */
         [data-testid="stSidebar"] .stMarkdown, 
-        [data-testid="stSidebar"] h1, 
-        [data-testid="stSidebar"] h2, 
-        [data-testid="stSidebar"] h3, 
-        [data-testid="stSidebar"] p {
+        [data-testid="stSidebar"] h1, [data-testid="stSidebar"] h2, [data-testid="stSidebar"] h3, [data-testid="stSidebar"] p {
             color: white !important; 
         }
-        /* Ajusta cor dos inputs na sidebar se necessário */
         [data-testid="stSidebar"] .stTextInput > label, 
         [data-testid="stSidebar"] .stSelectbox > label,
         [data-testid="stSidebar"] .stSlider > label {
             color: white !important;
         }
+        /* Estilo para o botão ficar mais integrado */
+        div.stButton > button {
+            width: 100%;
+        }
         </style>
         """, unsafe_allow_html=True)
 
-    # --- 1. Botão de Voltar (Sempre no topo da Sidebar) ---
-    if st.sidebar.button("🏠 Voltar para Início"):
-        st.session_state['pagina_atual'] = 'home'
-        st.rerun()
-
-    # --- 2. LOGO NA SIDEBAR (Ajustado) ---
+    # ==========================================
+    # 1. BLOCO DE TOPO (LOGO + NAVEGAÇÃO)
+    # ==========================================
     with st.sidebar:
+        # A Logo vem primeiro
         if os.path.exists("logo.png"):
-            # Colunas ajustadas para [1, 4, 1] -> O meio (4) é maior, logo a imagem aumenta
+            # Colunas para centralizar a imagem [1, 4, 1]
             sb_c1, sb_c2, sb_c3 = st.columns([1, 4, 1]) 
             with sb_c2:
                 st.image("logo.png", use_container_width=True)
-            st.markdown("---") 
         else:
-            st.header("🎩 Cartolendários") 
-            st.markdown("---")
+            st.header("🎩 Cartolendários")
+        
+        # O Botão vem logo abaixo da logo
+        st.write("") # Pequeno espaço
+        if st.button("🏠 Voltar para Início"):
+            st.session_state['pagina_atual'] = 'home'
+            st.rerun()
+            
+        st.markdown("---") # Divisória para separar dos filtros
 
-    # Título da Página Principal
+    # ==========================================
+    # 2. CONTEÚDO PRINCIPAL (Main Area)
+    # ==========================================
     st.title("🎩 Área de Competidores")
 
     # Constantes e Segredos
@@ -66,7 +70,9 @@ def executar_sistema():
     except FileNotFoundError:
         SENHA_ADMIN = "admin_local"
 
-    # --- 3. Filtros e Uploads ---
+    # ==========================================
+    # 3. BLOCO DO MEIO (FILTROS)
+    # ==========================================
     st.sidebar.header("⚙️ Filtros Globais")
     
     with st.sidebar.expander("Área Admin", expanded=False):
@@ -88,7 +94,7 @@ def executar_sistema():
     df_camp = data.padronizar_campeonato(df_camp)
     df_esc = data.padronizar_escalacoes(df_esc)
 
-    # Filtros Globais
+    # Filtros Globais (Selectboxes)
     anos = sorted(df_camp['Temporada'].unique(), reverse=True)
     sel_temp = st.sidebar.selectbox("📅 Temporada:", anos)
     df_c_temp = df_camp[df_camp['Temporada'] == sel_temp].copy()
@@ -121,7 +127,9 @@ def executar_sistema():
     # Ranking Lendas
     df_lendas_geral, df_lendas_ligas = utils.gerar_ranking_lendas(df_camp, sel_temp, r_ini, r_fim)
 
-    # Visualização (Abas)
+    # ==========================================
+    # 4. VISUALIZAÇÃO (ABAS)
+    # ==========================================
     tab1, tab2, tab3, tab4 = st.tabs(["📊 Tabela da Liga", "🔎 Raio-X do Time", "👕 Top Escalações", "🏅 Lendas"])
 
     with tab1:
@@ -158,48 +166,23 @@ def executar_sistema():
     with tab4:
         views.exibir_aba_lendas(df_lendas_geral, df_lendas_ligas)
 
-
-# --- RODAPÉ COM LINK ---
-st.sidebar.markdown("")
-st.sidebar.markdown("")
-st.sidebar.markdown("")
-st.sidebar.markdown("")
-st.sidebar.markdown("")
-st.sidebar.markdown("")
-st.sidebar.markdown("")
-st.sidebar.markdown("---")
-st.sidebar.caption("Mantido pela Diretoria: Elielton, Gil, Leandro, Léo e Welington 🛠️")
-st.sidebar.markdown(
-    "Desenvolvido por [**Leandro Costa Rocha**](https://www.linkedin.com/in/leandro-costa-rocha-b40189b0/)",
-    unsafe_allow_html=True
-)
-st.sidebar.caption("v1.0 - Cartolendários")
+    # ==========================================
+    # 5. BLOCO DE RODAPÉ (INFORMAÇÕES)
+    # ==========================================
+    st.sidebar.markdown("---")
+    st.sidebar.markdown("---")
+    st.sidebar.markdown("---")
+    st.sidebar.markdown("---")
+    st.sidebar.caption("Mantido pela Diretoria: Elielton, Gil, Leandro, Léo e Welington 🛠️")
+    st.sidebar.markdown(
+        "Desenvolvido por [**Leandro Costa Rocha**](https://www.linkedin.com/in/leandro-costa-rocha-b40189b0/)",
+        unsafe_allow_html=True
+    )
+    st.sidebar.caption("v1.0 - Cartolendários")
 
 
-# --- LÓGICA DE ROTEAMENTO (Decide qual página mostrar) ---
-
+# --- LÓGICA DE ROTEAMENTO ---
 if st.session_state['pagina_atual'] == 'home':
-    # Mostra a Landing Page
     home.render_page()
 else:
-    # Mostra o Sistema Completo
     executar_sistema()
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
