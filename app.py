@@ -90,34 +90,32 @@ with tab3:
         if df_esc_temp.empty:
             st.warning(f"Sem escalações para {sel_temp}.")
         else:
-            # 2. Descobre rodadas disponíveis na Escalação
+            # 2. Descobre rodadas disponíveis (Lista Única e Ordenada)
             if 'Rodada' in df_esc_temp.columns:
-                min_e = int(df_esc_temp['Rodada'].min())
-                max_e = int(df_esc_temp['Rodada'].max())
+                # Pega as rodadas únicas e converte para inteiros para ficar bonito (sem 1.0)
+                lista_rodadas = sorted(df_esc_temp['Rodada'].unique().astype(int))
                 
-                # 3. Slider Local (COM PROTEÇÃO DE ERRO)
-                st.markdown("##### 🕵️ Filtro de Rodadas (Específico desta Aba)")
+                # 3. Dropdown (Selectbox)
+                st.markdown("##### 🕵️ Filtro de Rodada (Específico desta Aba)")
                 
-                # Se só houver uma rodada, não cria slider para evitar o crash
-                if min_e == max_e:
-                    st.info(f"📅 Dados disponíveis apenas da **Rodada {min_e}**")
-                    ri_esc, rf_esc = min_e, max_e
-                else:
-                    c_slider, _ = st.columns([2, 1])
-                    with c_slider:
-                        ri_esc, rf_esc = st.slider(
-                            "Intervalo:", 
-                            min_value=min_e, 
-                            max_value=max_e, 
-                            value=(min_e, max_e), 
-                            key="slider_aba3"
-                        )
+                c_drop, _ = st.columns([1, 2]) # Coluna mais estreita para o dropdown
+                with c_drop:
+                    # O index=len()-1 faz com que a última rodada (mais recente) venha selecionada por padrão
+                    rodada_escolhida = st.selectbox(
+                        "Escolha a Rodada:", 
+                        lista_rodadas, 
+                        index=len(lista_rodadas)-1
+                    )
                 
                 # 4. Filtra e Exibe
-                df_esc_final = utils.filtrar_escalacoes(df_esc_temp, sel_temp, ri_esc, rf_esc)
+                # O TRUQUE: Passamos a mesma rodada como início e fim para a função filtrar_escalacoes
+                # Assim ela retorna apenas os dados daquela rodada específica.
+                df_esc_final = utils.filtrar_escalacoes(df_esc_temp, sel_temp, rodada_escolhida, rodada_escolhida)
+                
                 views.exibir_top_escalacoes(df_esc_final, t_padrao)
             else:
                 st.warning("Coluna 'Rodada' não encontrada nas escalações.")
+
 
 # --- RODAPÉ COM LINK ---
 st.sidebar.markdown("")
@@ -134,6 +132,7 @@ st.sidebar.markdown(
     unsafe_allow_html=True
 )
 st.sidebar.caption("v1.0 - Cartolendários")
+
 
 
 
