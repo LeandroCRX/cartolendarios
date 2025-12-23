@@ -115,7 +115,7 @@ def executar_sistema():
     if df_c_comp.empty or 'Rodada' not in df_c_comp.columns or df_c_comp['Rodada'].isnull().all():
         st.title("🎩 Área de Competidores")
         st.sidebar.warning("Sem dados para os filtros selecionados.")
-        st.warning(f"A bola ainda não rolou pela **{sel_comp}** na temporada **{sel_temp}**.")
+        st.warning(f"A bola ainda não rolou por aqui na temporada **{sel_temp}**.")
         st.stop()
 
     # Slider de Rodadas
@@ -194,3 +194,4 @@ if st.session_state['pagina_atual'] == 'home':
     home.render_page()
 else:
     executar_sistema()
+
