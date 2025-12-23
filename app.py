@@ -1,35 +1,35 @@
-import streamlit as st
-import os
-
-# Importa os módulos
-from modules import data, utils, views, home
-
-# 1. Configuração da Página (Deve ser sempre a primeira linha)
-st.set_page_config(page_title="Cartolendários", page_icon="🎩", layout="wide")
-
-# Inicializa o estado da página (Navegação)
-if 'pagina_atual' not in st.session_state:
-    st.session_state['pagina_atual'] = 'home'
-
-
-# --- FUNÇÃO PRINCIPAL DO SISTEMA ---
 def executar_sistema():
-    # --- 1. Botão de Voltar (Sempre no topo da Sidebar) ---
+    # --- 🎨 ESTILO CSS (Laranja na Sidebar) ---
+    st.markdown("""
+        <style>
+        /* Altera a cor de fundo da Sidebar */
+        [data-testid="stSidebar"] {
+            background-color: #FF8C00;
+        }
+        /* Opcional: Ajusta a cor do texto na sidebar para branco/preto se necessário */
+        [data-testid="stSidebar"] .stMarkdown, [data-testid="stSidebar"] h1, [data-testid="stSidebar"] h2, [data-testid="stSidebar"] h3 {
+            color: white; 
+        }
+        </style>
+        """, unsafe_allow_html=True)
+
+    # --- 1. Botão de Voltar ---
     if st.sidebar.button("🏠 Voltar para Início"):
         st.session_state['pagina_atual'] = 'home'
         st.rerun()
 
-    # --- 2. LOGO NA SIDEBAR (Inserido Aqui) ---
+    # --- 2. LOGO NA SIDEBAR (Ajustado) ---
     with st.sidebar:
         if os.path.exists("logo.png"):
-            # Centralizando na sidebar com colunas: [Espaço, Imagem, Espaço]
-            sb_c1, sb_c2, sb_c3 = st.columns([1, 2, 1])
+            # MUDANÇA AQUI: De [1, 2, 1] para [1, 4, 1]
+            # Isso dá mais espaço para a coluna do meio (onde está a imagem)
+            sb_c1, sb_c2, sb_c3 = st.columns([1, 4, 1]) 
+            
             with sb_c2:
                 st.image("logo.png", use_container_width=True)
-            st.markdown("---")  # Linha divisória elegante
+            st.markdown("---") 
         else:
-            # Fallback: Se não tiver logo, mostra o título antigo
-            st.header("🎩 Cartolendários")
+            st.header("🎩 Cartolendários") 
             st.markdown("---")
 
     # Título da Página Principal
@@ -44,9 +44,9 @@ def executar_sistema():
     except FileNotFoundError:
         SENHA_ADMIN = "admin_local"
 
-    # --- 3. Filtros e Uploads (Continuam aqui) ---
+    # --- 3. Filtros e Uploads ---
     st.sidebar.header("⚙️ Filtros Globais")
-
+    
     with st.sidebar.expander("Área Admin", expanded=False):
         senha = st.text_input("Senha:", type="password")
         up_camp, up_esc = None, None
@@ -136,21 +136,6 @@ def executar_sistema():
     with tab4:
         views.exibir_aba_lendas(df_lendas_geral, df_lendas_ligas)
 
-    # Rodapé Sidebar
-    st.sidebar.markdown("---")
-    st.sidebar.caption("Dev: Leandro Costa Rocha")
-
-
-# --- LÓGICA DE ROTEAMENTO (Decide qual página mostrar) ---
-
-if st.session_state['pagina_atual'] == 'home':
-    # Mostra a Landing Page
-    home.render_page()
-else:
-    # Mostra o Sistema Completo.
-    # Simplifiquei aqui retirando o "if __name__" interno, pois já estamos no fluxo principal.
-    executar_sistema()
-
 
 # --- RODAPÉ COM LINK ---
 st.sidebar.markdown("")
@@ -167,6 +152,7 @@ st.sidebar.markdown(
     unsafe_allow_html=True
 )
 st.sidebar.caption("v1.0 - Cartolendários")
+
 
 
 
