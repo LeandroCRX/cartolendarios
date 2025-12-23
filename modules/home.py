@@ -149,4 +149,5 @@ def render_page():
             st.rerun()
 
     st.markdown("---")
+    st.markdown("Desenvolvido por [**Leandro Costa Rocha**](https://www.linkedin.com/in/leandro-costa-rocha-b40189b0/")
     st.caption("© 2026 Cartolendários - Todos os direitos reservados.")
