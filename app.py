@@ -1,3 +1,17 @@
+import streamlit as st
+import os
+
+# Importa os módulos (Garante que a pasta modules tem o __init__.py e home.py)
+from modules import data, utils, views, home
+
+# 1. Configuração da Página (Deve ser sempre a primeira linha do Streamlit)
+st.set_page_config(page_title="Cartolendários", page_icon="🎩", layout="wide")
+
+# Inicializa o estado da página (Navegação)
+if 'pagina_atual' not in st.session_state:
+    st.session_state['pagina_atual'] = 'home'
+
+# --- FUNÇÃO PRINCIPAL DO SISTEMA ---
 def executar_sistema():
     # --- 🎨 ESTILO CSS (Laranja na Sidebar) ---
     st.markdown("""
@@ -6,14 +20,24 @@ def executar_sistema():
         [data-testid="stSidebar"] {
             background-color: #FF8C00;
         }
-        /* Opcional: Ajusta a cor do texto na sidebar para branco/preto se necessário */
-        [data-testid="stSidebar"] .stMarkdown, [data-testid="stSidebar"] h1, [data-testid="stSidebar"] h2, [data-testid="stSidebar"] h3 {
-            color: white; 
+        /* Ajusta a cor do texto na sidebar para branco (opcional, para contraste) */
+        [data-testid="stSidebar"] .stMarkdown, 
+        [data-testid="stSidebar"] h1, 
+        [data-testid="stSidebar"] h2, 
+        [data-testid="stSidebar"] h3, 
+        [data-testid="stSidebar"] p {
+            color: white !important; 
+        }
+        /* Ajusta cor dos inputs na sidebar se necessário */
+        [data-testid="stSidebar"] .stTextInput > label, 
+        [data-testid="stSidebar"] .stSelectbox > label,
+        [data-testid="stSidebar"] .stSlider > label {
+            color: white !important;
         }
         </style>
         """, unsafe_allow_html=True)
 
-    # --- 1. Botão de Voltar ---
+    # --- 1. Botão de Voltar (Sempre no topo da Sidebar) ---
     if st.sidebar.button("🏠 Voltar para Início"):
         st.session_state['pagina_atual'] = 'home'
         st.rerun()
@@ -21,10 +45,8 @@ def executar_sistema():
     # --- 2. LOGO NA SIDEBAR (Ajustado) ---
     with st.sidebar:
         if os.path.exists("logo.png"):
-            # MUDANÇA AQUI: De [1, 2, 1] para [1, 4, 1]
-            # Isso dá mais espaço para a coluna do meio (onde está a imagem)
+            # Colunas ajustadas para [1, 4, 1] -> O meio (4) é maior, logo a imagem aumenta
             sb_c1, sb_c2, sb_c3 = st.columns([1, 4, 1]) 
-            
             with sb_c2:
                 st.image("logo.png", use_container_width=True)
             st.markdown("---") 
@@ -152,6 +174,19 @@ st.sidebar.markdown(
     unsafe_allow_html=True
 )
 st.sidebar.caption("v1.0 - Cartolendários")
+
+
+# --- LÓGICA DE ROTEAMENTO (Decide qual página mostrar) ---
+
+if st.session_state['pagina_atual'] == 'home':
+    # Mostra a Landing Page
+    home.render_page()
+else:
+    # Mostra o Sistema Completo
+    executar_sistema()
+
+
+
 
 
 
