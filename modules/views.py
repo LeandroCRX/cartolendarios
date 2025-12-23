@@ -8,7 +8,6 @@ def exibir_tabela_liga(df_res, sel_comp):
         st.warning("Sem jogos.")
         return
 
-    # Garante numérico para evitar erro de soma
     df_res['Pts'] = pd.to_numeric(df_res['Pts'], errors='coerce').fillna(0)
     df_res['Placar'] = pd.to_numeric(df_res['Placar'], errors='coerce').fillna(0)
     
@@ -38,7 +37,6 @@ def exibir_raio_x(df_res):
     with c2:
         dft = df_res[df_res['Time'] == t_sel].sort_values('Rodada')
         
-        # Cards Gerais
         k1, k2, k3, k4 = st.columns(4)
         k1.metric("Pontos", dft['Pts'].sum())
         k2.metric("Média", f"{dft['Placar'].mean():.2f}")
@@ -47,7 +45,6 @@ def exibir_raio_x(df_res):
         k4.metric("Aprov.", f"{apr:.1f}%")
         st.divider()
         
-        # Cards Resultado (V/E/D)
         vitorias = len(dft[dft['Res']=='V'])
         empates = len(dft[dft['Res']=='E'])
         derrotas = len(dft[dft['Res']=='D'])
@@ -57,13 +54,11 @@ def exibir_raio_x(df_res):
         j3.metric("❌ Derrotas", derrotas)
         st.divider()
         
-        # Histórico Visual
         st.markdown("#### 📜 Histórico")
         hist = dft[['Rodada', 'Res', 'Placar', 'Placar_Adv', 'Adv']].copy()
         hist['Icone'] = hist['Res'].map({'V': '✅', 'E': '➖', 'D': '❌'})
         hist['Status'] = hist['Res'].map({'V': 'VITÓRIA', 'E': 'EMPATE', 'D': 'DERROTA'})
         
-        # Formatação
         hist['Rodada'] = hist['Rodada'].apply(lambda x: f"{x:.0f}")
         hist['Sua Pont.'] = hist['Placar'].apply(lambda x: f"{x:.2f}")
         hist['Pont. Adv.'] = hist['Placar_Adv'].apply(lambda x: f"{x:.2f}")
@@ -77,54 +72,44 @@ def exibir_raio_x(df_res):
             hide_index=True, use_container_width=True
         )
 
-def exibir_top_escalacoes(df_esc_ok, t_sel_aba2, sel_comp):
+def exibir_top_escalacoes(df_esc_ok, t_sel_aba2):
+    # Nota: Removemos o argumento 'sel_comp' pois esta aba ignora a competição
     if df_esc_ok.empty:
-        st.info("⚠️ Carregue o arquivo 'dados_escalacoes.xlsx' para ver esta análise.")
+        st.info("⚠️ Sem dados de escalações para o período selecionado.")
         return
 
-    st.markdown(f"### 🎨 Painel Visual: {sel_comp}")
-    st.caption("O tamanho do quadrado representa a quantidade de escalações.")
+    st.markdown(f"### 🎨 Painel Visual")
+    st.caption("O tamanho do quadrado representa a quantidade de escalações na temporada.")
     
-    # 1. Preparar Dados dos Jogadores
     df_tree = df_esc_ok.groupby(['Atleta', 'Posição']).size().reset_index(name='Escalações').sort_values('Escalações', ascending=False).head(50)
     
-    # 2. Preparar Dados dos Capitães
     df_cap_tree = df_esc_ok[df_esc_ok['Capitao'].astype(str).str.contains('CAP', case=False, na=False)]
     df_cap_tree = df_cap_tree['Atleta'].value_counts().reset_index()
     df_cap_tree.columns = ['Atleta', 'Vezes']
     df_cap_tree = df_cap_tree.head(30)
 
-    # --- GRÁFICO 1: JOGADORES (AZUL) ---
-    st.subheader("🔥 Os Queridinhos da Rodada")
+    st.subheader("🔥 Os Queridinhos")
     if not df_tree.empty:
         fig = px.treemap(
-            df_tree, 
-            path=['Posição', 'Atleta'], 
-            values='Escalações', 
-            color='Escalações', 
-            color_continuous_scale='Blues'
+            df_tree, path=['Posição', 'Atleta'], values='Escalações', 
+            color='Escalações', color_continuous_scale='Blues'
         )
         fig.update_traces(textinfo="label+value")
         fig.update_layout(margin=dict(t=10, l=0, r=0, b=0))
         st.plotly_chart(fig, use_container_width=True)
 
-    # --- GRÁFICO 2: CAPITÃES (LARANJA) ---
     st.subheader("©️ Top Capitães")
     if not df_cap_tree.empty:
         fig_caps = px.treemap(
-            df_cap_tree, 
-            path=['Atleta'], 
-            values='Vezes',
-            color='Vezes',
-            color_continuous_scale='Oranges'
+            df_cap_tree, path=['Atleta'], values='Vezes', 
+            color='Vezes', color_continuous_scale='Oranges'
         )
         fig_caps.update_traces(textinfo="label+value")
         fig_caps.update_layout(margin=dict(t=10, l=0, r=0, b=0))
         st.plotly_chart(fig_caps, use_container_width=True)
     else:
-        st.warning("Sem dados de capitães para exibir.")
+        st.info("Sem dados de capitães.")
 
-    # --- TABELAS COMPARATIVAS ---
     st.divider()
     st.markdown("### ⚔️ Comparativo Detalhado")
     
@@ -144,7 +129,7 @@ def exibir_top_escalacoes(df_esc_ok, t_sel_aba2, sel_comp):
 
     posicoes = ['Goleiro', 'Lateral', 'Zagueiro', 'Meia', 'Atacante', 'Técnico']
     df_time_foco = df_esc_ok[df_esc_ok['Time'] == time_foco]
-    df_geral = df_esc_ok.copy()
+    df_geral = df_esc_ok.copy() # Geral agora é "Toda a temporada" filtrada pela rodada
 
     for pos in posicoes:
         c1, c2 = st.columns(2)
@@ -155,9 +140,8 @@ def exibir_top_escalacoes(df_esc_ok, t_sel_aba2, sel_comp):
                 st.dataframe(df_show.style.set_properties(**{'text-align': 'center'}), use_container_width=True, hide_index=True)
             else:
                 st.caption("Nenhum escalado.")
-        
         with c2:
-            st.markdown(f"**{pos}s - Tendência da Liga**")
+            st.markdown(f"**{pos}s - Geral (Temporada)**")
             df_show_g = get_top5(df_geral, pos)
             if not df_show_g.empty:
                 st.dataframe(df_show_g.style.set_properties(**{'text-align': 'center'}), use_container_width=True, hide_index=True)
