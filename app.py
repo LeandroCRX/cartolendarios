@@ -84,7 +84,7 @@ with tab3:
     if df_esc is None or df_esc.empty:
         st.info("Arquivo de escalações não carregado.")
     else:
-        # 1. Filtra apenas pela TEMPORADA (ignora competição global)
+        # 1. Filtra apenas pela TEMPORADA
         df_esc_temp = df_esc[df_esc['Temporada'] == sel_temp].copy()
         
         if df_esc_temp.empty:
@@ -95,18 +95,29 @@ with tab3:
                 min_e = int(df_esc_temp['Rodada'].min())
                 max_e = int(df_esc_temp['Rodada'].max())
                 
-                # 3. Slider Local
+                # 3. Slider Local (COM PROTEÇÃO DE ERRO)
                 st.markdown("##### 🕵️ Filtro de Rodadas (Específico desta Aba)")
-                c_slider, _ = st.columns([2, 1]) # Coluna para o slider não ficar gigante
-                with c_slider:
-                    ri_esc, rf_esc = st.slider("Intervalo:", min_e, max_e, (min_e, max_e), key="slider_aba3")
+                
+                # Se só houver uma rodada, não cria slider para evitar o crash
+                if min_e == max_e:
+                    st.info(f"📅 Dados disponíveis apenas da **Rodada {min_e}**")
+                    ri_esc, rf_esc = min_e, max_e
+                else:
+                    c_slider, _ = st.columns([2, 1])
+                    with c_slider:
+                        ri_esc, rf_esc = st.slider(
+                            "Intervalo:", 
+                            min_value=min_e, 
+                            max_value=max_e, 
+                            value=(min_e, max_e), 
+                            key="slider_aba3"
+                        )
                 
                 # 4. Filtra e Exibe
                 df_esc_final = utils.filtrar_escalacoes(df_esc_temp, sel_temp, ri_esc, rf_esc)
                 views.exibir_top_escalacoes(df_esc_final, t_padrao)
             else:
                 st.warning("Coluna 'Rodada' não encontrada nas escalações.")
-
 
 # --- RODAPÉ COM LINK ---
 st.sidebar.markdown("")
@@ -123,6 +134,7 @@ st.sidebar.markdown(
     unsafe_allow_html=True
 )
 st.sidebar.caption("v1.0 - Cartolendários")
+
 
 
 
