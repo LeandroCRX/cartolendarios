@@ -34,20 +34,29 @@ def padronizar_campeonato(df):
     return df
 
 def padronizar_escalacoes(df):
-    """Ajusta nomes de colunas das escalações."""
+    """Ajusta nomes de colunas das escalações e limpa dados."""
     if df is None: return None
     df = df.copy()
-    # Mapa de renomeação para garantir padrão
+    
+    # 1. Renomear (Normalização)
     mapa = {
-        'Nome': 'Atleta', 'Posicao': 'Posição', 
-        'Time Cartola': 'Time', 'ime Cartola': 'Time', 
-        'Capitão': 'Capitao', 'Ano': 'Temporada'
+        'Nome': 'Atleta', 'Posicao': 'Posição', 'Posição': 'Posição',
+        'Time Cartola': 'Time', 'ime Cartola': 'Time', 'Cartoleiro': 'Cartoleiro',
+        'Capitão': 'Capitao', 'Capitao': 'Capitao', 'Ano': 'Temporada'
     }
     df.rename(columns=mapa, inplace=True)
     
-    # Tratamento da Temporada
+    # 2. Tratamento da Temporada (Crucial para o filtro funcionar)
     if 'Temporada' in df.columns:
         df = df.dropna(subset=['Temporada'])
-        df['Temporada'] = df['Temporada'].astype(str).str.replace(r'\.0$', '', regex=True)
+        # Converte para texto, remove .0 (de 2025.0), e remove espaços extras
+        df['Temporada'] = df['Temporada'].astype(str).str.replace(r'\.0$', '', regex=True).str.strip()
     
+    # 3. Tratamento da Rodada (Garante que é número)
+    if 'Rodada' in df.columns:
+        # Força conversão para numérico, transformando erros em NaN
+        df['Rodada'] = pd.to_numeric(df['Rodada'], errors='coerce')
+        df = df.dropna(subset=['Rodada']) # Remove linhas onde a rodada ficou inválida
+        df['Rodada'] = df['Rodada'].astype(int)
+
     return df
