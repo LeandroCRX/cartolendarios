@@ -73,13 +73,11 @@ def exibir_raio_x(df_res):
         )
 
 def exibir_top_escalacoes(df_esc_ok, t_sel_aba2):
-    # Nota: Removemos o argumento 'sel_comp' pois esta aba ignora a competição
     if df_esc_ok.empty:
         st.info("⚠️ Sem dados de escalações para o período selecionado.")
         return
 
     st.markdown(f"### 🎨 Painel Visual")
-    st.caption("O tamanho do quadrado representa a quantidade de escalações na temporada.")
     
     df_tree = df_esc_ok.groupby(['Atleta', 'Posição']).size().reset_index(name='Escalações').sort_values('Escalações', ascending=False).head(50)
     
@@ -107,8 +105,6 @@ def exibir_top_escalacoes(df_esc_ok, t_sel_aba2):
         fig_caps.update_traces(textinfo="label+value")
         fig_caps.update_layout(margin=dict(t=10, l=0, r=0, b=0))
         st.plotly_chart(fig_caps, use_container_width=True)
-    else:
-        st.info("Sem dados de capitães.")
 
     st.divider()
     st.markdown("### ⚔️ Comparativo Detalhado")
@@ -129,7 +125,7 @@ def exibir_top_escalacoes(df_esc_ok, t_sel_aba2):
 
     posicoes = ['Goleiro', 'Lateral', 'Zagueiro', 'Meia', 'Atacante', 'Técnico']
     df_time_foco = df_esc_ok[df_esc_ok['Time'] == time_foco]
-    df_geral = df_esc_ok.copy() # Geral agora é "Toda a temporada" filtrada pela rodada
+    df_geral = df_esc_ok.copy()
 
     for pos in posicoes:
         c1, c2 = st.columns(2)
@@ -146,3 +142,77 @@ def exibir_top_escalacoes(df_esc_ok, t_sel_aba2):
             if not df_show_g.empty:
                 st.dataframe(df_show_g.style.set_properties(**{'text-align': 'center'}), use_container_width=True, hide_index=True)
         st.divider()
+
+def exibir_aba_lendas(df_geral, df_ligas):
+    """Exibe Hall da Fama e Campeões por Rodada."""
+    
+    st.markdown("### 🏅 Hall da Fama & Campeões")
+    
+    tab_l1, tab_l2 = st.tabs(["🌍 Ranking Geral (Top Mitadas)", "👑 Campeões da Rodada (Por Liga)"])
+    
+    # --- ABA 1: Ranking Geral (Hall da Fama) ---
+    with tab_l1:
+        st.caption("As maiores pontuações registradas na temporada, independente da liga.")
+        if df_geral.empty:
+            st.info("Nenhum registro encontrado.")
+        else:
+            # Formatação Hall da Fama
+            df_show = df_geral.head(50).copy()
+            df_show.reset_index(drop=True, inplace=True)
+            df_show.index += 1
+            df_show['Pos'] = df_show.index.astype(str) + 'º'
+            
+            df_show.loc[1, 'Pos'] = '🥇 1º' if len(df_show) >= 1 else '1º'
+            df_show.loc[2, 'Pos'] = '🥈 2º' if len(df_show) >= 2 else '2º'
+            df_show.loc[3, 'Pos'] = '🥉 3º' if len(df_show) >= 3 else '3º'
+
+            df_show['Rodada'] = df_show['Rodada'].astype(int).astype(str)
+            
+            st.dataframe(
+                df_show[['Pos', 'Time', 'Pontuação', 'Rodada', 'Competição', 'Adversário']]
+                .style.format({'Pontuação': '{:.2f}'})
+                .background_gradient(subset=['Pontuação'], cmap='Greens')
+                .set_properties(**{'text-align': 'center'}),
+                use_container_width=True, hide_index=True
+            )
+
+    # --- ABA 2: Campeões da Rodada (Por Liga) ---
+    with tab_l2:
+        st.caption("Veja quem foi o maior pontuador de cada rodada na liga selecionada.")
+        
+        if df_ligas.empty:
+            st.info("Nenhuma competição do tipo 'Liga' encontrada.")
+        else:
+            # Dropdown de Ligas
+            ligas_disponiveis = sorted(df_ligas['Competição'].unique())
+            liga_sel = st.selectbox("Selecione a Liga para visualizar:", ligas_disponiveis)
+            
+            # Filtra dados da liga selecionada
+            df_liga_atual = df_ligas[df_ligas['Competição'] == liga_sel].copy()
+            
+            if df_liga_atual.empty:
+                st.warning("Sem dados para esta liga.")
+            else:
+                # LÓGICA DO CAMPEÃO DA RODADA
+                # 1. Garante que Rodada é número para ordenar corretamente
+                df_liga_atual['Rodada'] = pd.to_numeric(df_liga_atual['Rodada'], errors='coerce')
+                
+                # 2. Encontra a pontuação máxima de cada rodada
+                # Usamos transform('max') para lidar com empates (mostra os dois se empatarem)
+                max_pts_por_rodada = df_liga_atual.groupby('Rodada')['Pontuação'].transform('max')
+                df_campeoes = df_liga_atual[df_liga_atual['Pontuação'] == max_pts_por_rodada]
+                
+                # 3. Ordena cronologicamente (Rodada 1, 2, 3...)
+                df_campeoes = df_campeoes.sort_values('Rodada')
+                
+                # 4. Formatação para Exibição
+                df_campeoes['Rodada'] = df_campeoes['Rodada'].astype(int).astype(str)
+                df_campeoes['👑'] = '🏆' # Adiciona um ícone visual
+                
+                st.dataframe(
+                    df_campeoes[['Rodada', '👑', 'Time', 'Pontuação', 'Adversário']]
+                    .style.format({'Pontuação': '{:.2f}'})
+                    .background_gradient(subset=['Pontuação'], cmap='Oranges')
+                    .set_properties(**{'text-align': 'center'}),
+                    use_container_width=True, hide_index=True
+                )
