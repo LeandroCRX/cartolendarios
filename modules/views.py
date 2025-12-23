@@ -226,3 +226,42 @@ def exibir_aba_lendas(df_geral, df_ligas):
                     .set_properties(**{'text-align': 'center'}),
                     use_container_width=True, hide_index=True
                 )
+
+
+    
+    # --- ABA 3: Rei da Rodada (O Maior entre TODAS as Ligas) ---
+    with tab_l3:
+        st.caption("Quem foi o MELHOR de todos na rodada? Compara todas as ligas e mostra o maior pontuador absoluto.")
+        
+        if df_ligas.empty:
+            st.info("Sem dados de ligas para comparar.")
+        else:
+            # 1. Filtra para garantir que só temos "Ligas" (Caso tenha passado sujeira)
+            # O filtro é case-insensitive (pega 'Liga', 'liga', 'LIGA')
+            df_reis = df_ligas[df_ligas['Competição'].str.contains('Liga', case=False, na=False)].copy()
+            
+            if df_reis.empty:
+                 st.warning("Nenhuma competição com nome 'Liga' encontrada.")
+            else:
+                # 2. Garante que Rodada é número
+                df_reis['Rodada'] = pd.to_numeric(df_reis['Rodada'], errors='coerce')
+
+                # 3. Mágica: Agrupa por Rodada e descobre o MAX global (entre todas as ligas)
+                max_pts_global = df_reis.groupby('Rodada')['Pontuação'].transform('max')
+                
+                # 4. Mantém apenas as linhas que igualam esse máximo
+                df_reis_final = df_reis[df_reis['Pontuação'] == max_pts_global].copy()
+
+                # 5. Ordenação e Formatação
+                df_reis_final = df_reis_final.sort_values('Rodada')
+                df_reis_final['Rodada'] = df_reis_final['Rodada'].astype(int).astype(str)
+                df_reis_final['👑'] = '👑' # Ícone de Rei
+
+                # Mostramos também a coluna "Competição" para saber de qual Liga o Rei veio
+                st.dataframe(
+                    df_reis_final[['Rodada', '👑', 'Time', 'Pontuação', 'Competição', 'Adversário']]
+                    .style.format({'Pontuação': '{:.2f}'})
+                    .background_gradient(subset=['Pontuação'], cmap='Reds') # Vermelho real para destaque
+                    .set_properties(**{'text-align': 'center'}),
+                    use_container_width=True, hide_index=True
+                )
