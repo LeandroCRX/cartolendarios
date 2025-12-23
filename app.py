@@ -96,7 +96,7 @@ with tab3:
                 lista_rodadas = sorted(df_esc_temp['Rodada'].unique().astype(int))
                 
                 # 3. Dropdown (Selectbox)
-                st.markdown("##### 🕵️ Filtro de Rodada (Específico desta Aba)")
+                st.markdown("##### 🕵️ Filtro de Rodada")
                 
                 c_drop, _ = st.columns([1, 2]) # Coluna mais estreita para o dropdown
                 with c_drop:
@@ -132,6 +132,7 @@ st.sidebar.markdown(
     unsafe_allow_html=True
 )
 st.sidebar.caption("v1.0 - Cartolendários")
+
 
 
 
