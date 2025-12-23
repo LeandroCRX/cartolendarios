@@ -19,7 +19,7 @@ def carregar_arquivo(file_or_path):
         return None
 
 def padronizar_campeonato(df):
-    """Ajusta nomes de colunas e remove NaNs."""
+    """Ajusta nomes de colunas do campeonato."""
     if df is None: return None
     df = df.copy()
     col_map = {'Competicao': 'Competição', 'Ano': 'Temporada'}
@@ -31,4 +31,23 @@ def padronizar_campeonato(df):
     df = df.dropna(subset=['Temporada'])
     df['Temporada'] = df['Temporada'].astype(str).str.replace(r'\.0$', '', regex=True)
     df = df[df['Temporada'].str.lower() != 'nan']
+    return df
+
+def padronizar_escalacoes(df):
+    """Ajusta nomes de colunas das escalações."""
+    if df is None: return None
+    df = df.copy()
+    # Mapa de renomeação para garantir padrão
+    mapa = {
+        'Nome': 'Atleta', 'Posicao': 'Posição', 
+        'Time Cartola': 'Time', 'ime Cartola': 'Time', 
+        'Capitão': 'Capitao', 'Ano': 'Temporada'
+    }
+    df.rename(columns=mapa, inplace=True)
+    
+    # Tratamento da Temporada
+    if 'Temporada' in df.columns:
+        df = df.dropna(subset=['Temporada'])
+        df['Temporada'] = df['Temporada'].astype(str).str.replace(r'\.0$', '', regex=True)
+    
     return df
