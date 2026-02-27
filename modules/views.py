@@ -568,7 +568,10 @@ def exibir_aba_lendas(df_temporada):
     t1, t2, t3 = st.tabs(["🌍 Ranking Geral", "🏆 Campeões da Rodada", "👑 Rei da Rodada"])
     
     with t1:
-        d = df_geral.head(50).copy(); d.reset_index(drop=True, inplace=True); d.index+=1; d['Pos']=d.index.astype(str)+'º'
+        # Puxamos as maiores pontuações exclusivamente das competições do tipo Liga 
+        # (df_ligas já foi extraído contendo apenas Ligas)
+        d = df_ligas.drop_duplicates(subset=['Time', 'Rodada']).head(50).copy()
+        d.reset_index(drop=True, inplace=True); d.index+=1; d['Pos']=d.index.astype(str)+'º'
         if len(d)>=1: d.loc[1,'Pos']='🥇 1º'; 
         if len(d)>=2: d.loc[2,'Pos']='🥈 2º'; 
         if len(d)>=3: d.loc[3,'Pos']='🥉 3º'
