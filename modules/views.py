@@ -568,9 +568,8 @@ def exibir_aba_lendas(df_temporada):
     t1, t2, t3 = st.tabs(["🌍 Ranking Geral", "🏆 Campeões da Rodada", "👑 Rei da Rodada"])
     
     with t1:
-        # Puxamos as maiores pontuações exclusivamente das competições do tipo Liga 
-        # (df_ligas já foi extraído contendo apenas Ligas)
-        d = df_ligas.drop_duplicates(subset=['Time', 'Rodada']).head(50).copy()
+        # Extrai de df_ligas, ordena pelas maiores pontuações ANTES de remover duplicatas para reter o recorde, e então pega os Top 50.
+        d = df_ligas.sort_values('Pontuação', ascending=False).drop_duplicates(subset=['Time', 'Rodada']).head(50).copy()
         d.reset_index(drop=True, inplace=True); d.index+=1; d['Pos']=d.index.astype(str)+'º'
         if len(d)>=1: d.loc[1,'Pos']='🥇 1º'; 
         if len(d)>=2: d.loc[2,'Pos']='🥈 2º'; 
@@ -579,11 +578,13 @@ def exibir_aba_lendas(df_temporada):
         if 'Adversário' not in d.columns: d['Adversário'] = d['Adv'] if 'Adv' in d.columns else '-'
         st.dataframe(d[['Pos','Time','Pontuação','Rodada','Competição','Adversário']].style.format({'Pontuação':'{:.2f}'}).background_gradient(subset=['Pontuação'], cmap='Greens').set_properties(**{'text-align':'center'}), use_container_width=True, hide_index=True)
     with t2:
-        unique_ls = df_ligas['Competição'].unique()
+        # Aba Campeões da Rodada - agora lista EXCLUSIVAMENTE competições do tipo Liga.
+        df_apenas_ligas = df_ligas[df_ligas['Competição'].astype(str).str.contains('Liga', case=False, na=False)]
+        unique_ls = df_apenas_ligas['Competição'].unique()
         ls = sorted([str(c) for c in unique_ls if pd.notna(c) and str(c).strip() != ''])
         
         if ls:
-            l = st.selectbox("Filtrar Liga:", ls); dl = df_ligas[df_ligas['Competição']==l].copy()
+            l = st.selectbox("Filtrar Liga:", ls); dl = df_apenas_ligas[df_apenas_ligas['Competição']==l].copy()
             if not dl.empty:
                 dl['Rodada'] = pd.to_numeric(dl['Rodada'], errors='coerce')
                 mx = dl.groupby('Rodada')['Pontuação'].transform('max'); dc = dl[dl['Pontuação']==mx].sort_values('Rodada')
@@ -591,7 +592,7 @@ def exibir_aba_lendas(df_temporada):
                 if 'Adversário' not in dc.columns: dc['Adversário'] = dc['Adv'] if 'Adv' in dc.columns else '-'
                 st.dataframe(dc[['Rodada','🥇','Time','Pontuação','Adversário']].style.format({'Pontuação':'{:.2f}'}).background_gradient(subset=['Pontuação'], cmap='Oranges').set_properties(**{'text-align':'center'}), use_container_width=True, hide_index=True)
         else:
-            st.info("Sem dados de ligas.")
+            st.info("Sem dados de ligas processadas.")
             
     with t3:
         dr = df_ligas[df_ligas['Competição'].str.contains('Liga', case=False, na=False)].copy()
