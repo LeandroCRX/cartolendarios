@@ -1,0 +1,11 @@
+venv/
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+.streamlit/config.toml
+.streamlit/secrets.toml
+*.xlsx
+*.csv
+# Mantendo apenas os dados padrão se necessário, mas geralmente dados grandes vão no gitignore
+# dados_campeonato.xlsx
+# dados_escalacoes.xlsx
