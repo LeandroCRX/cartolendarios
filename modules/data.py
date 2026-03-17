@@ -20,9 +20,28 @@ def carregar_arquivo(uploaded_file):
         else:
             return pd.read_csv(uploaded_file, sep=';', encoding='utf-8')
     except Exception as e:
-        # Em produção, erros de leitura podem acontecer, mas não queremos travar tudo sem aviso
         st.error(f"Erro ao carregar arquivo: {e}")
         return None
+
+# ==============================================================================
+# FUNÇÕES CACHEADAS — Evitam releitura dos arquivos a cada interação do usuário
+# ==============================================================================
+
+@st.cache_data(ttl=600, show_spinner="⏳ Carregando dados dos campeonatos...")
+def carregar_campeonato_cache(caminho: str):
+    """Carrega e padroniza o arquivo de campeonato com cache (10 minutos)."""
+    df = carregar_arquivo(caminho)
+    if df is None:
+        return None
+    return padronizar_campeonato(df)
+
+@st.cache_data(ttl=600, show_spinner="⏳ Carregando escalações...")
+def carregar_escalacoes_cache(caminho: str):
+    """Carrega e padroniza o arquivo de escalações com cache (10 minutos)."""
+    df = carregar_arquivo(caminho)
+    if df is None:
+        return None
+    return padronizar_escalacoes(df)
 
 def padronizar_campeonato(df):
     """Ajusta nomes de colunas do campeonato."""

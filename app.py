@@ -62,21 +62,26 @@ def executar_sistema():
     ARQUIVO_PADRAO = "dados_campeonato.xlsx"
     ARQUIVO_ESCALACOES = "dados_escalacoes.xlsx"
 
-    df_camp = data.carregar_arquivo(up_camp) if up_camp else data.carregar_arquivo(ARQUIVO_PADRAO)
-    df_esc = data.carregar_arquivo(up_esc) if up_esc else data.carregar_arquivo(ARQUIVO_ESCALACOES)
+    # Quando o Admin faz upload manual, usa o carregamento direto (sem cache)
+    # Para os arquivos padrão, usa o cache para evitar releitura a cada clique
+    if up_camp:
+        df_camp_raw = data.carregar_arquivo(up_camp)
+        df_camp = data.padronizar_campeonato(df_camp_raw) if df_camp_raw is not None else None
+    else:
+        df_camp = data.carregar_campeonato_cache(ARQUIVO_PADRAO)
+
+    if up_esc:
+        df_esc_raw = data.carregar_arquivo(up_esc)
+        df_esc = data.padronizar_escalacoes(df_esc_raw) if df_esc_raw is not None else None
+    else:
+        df_esc = data.carregar_escalacoes_cache(ARQUIVO_ESCALACOES)
 
     if df_camp is None:
-        # Mostra o aviso DENTRO da sidebar para ficar visível onde deveria estar o filtro
         st.sidebar.warning("⚠️ Arquivo 'dados_campeonato.xlsx' não encontrado.")
         st.sidebar.info("Verifique se o arquivo foi enviado para o GitHub e se 'openpyxl' está no requirements.txt.")
-        
-        # Aviso também na tela principal
         st.title("🎩 Área de Competidores")
         st.warning("Dados não carregados. O sistema foi interrompido.")
         st.stop()
-
-    df_camp = data.padronizar_campeonato(df_camp)
-    df_esc = data.padronizar_escalacoes(df_esc)
 
     # Filtro de Temporada (Sidebar)
     anos = sorted(df_camp['Temporada'].unique(), reverse=True)
