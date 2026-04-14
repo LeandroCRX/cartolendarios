@@ -55,30 +55,36 @@ def executar_sistema():
             up_camp, up_esc = None, None
             if senha == SENHA_ADMIN:
                 st.success("Admin Ativado 🔓")
-                up_camp = st.file_uploader("Jogos", type=["xlsx", "csv"], key="u1")
-                up_esc = st.file_uploader("Escalações", type=["xlsx", "csv"], key="u2")
+                st.info("💡 Dica: O sistema carrega os parâmetros da Planilha (Google Sheets) automaticamente. O upload serve como sobreposição manual temporária.")
+                up_camp = st.file_uploader("Jogos (Sobrescrita)", type=["xlsx", "csv"], key="u1")
+                up_esc = st.file_uploader("Escalações (Sobrescrita)", type=["xlsx", "csv"], key="u2")
 
-    # Carga de Dados
-    ARQUIVO_PADRAO = "dados_campeonato.xlsx"
-    ARQUIVO_ESCALACOES = "dados_escalacoes.xlsx"
+    # Carga de Dados (Google Sheets e Upload do Admin)
+    URL_PLANILHA = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRe3TueEzfUATx9dp4ucEqu9c0gYJBWhIwh98VTUYca3itxkMO9Aw0wmZfCzQG_PotBrCx1YlBB0Nfy/pub?output=xlsx"
 
-    # Quando o Admin faz upload manual, usa o carregamento direto (sem cache)
-    # Para os arquivos padrão, usa o cache para evitar releitura a cada clique
+    planilha_gs = None
+    if not up_camp or not up_esc:
+        planilha_gs = data.carregar_dados_google_sheets(URL_PLANILHA)
+
+    # Jogos
     if up_camp:
         df_camp_raw = data.carregar_arquivo(up_camp)
         df_camp = data.padronizar_campeonato(df_camp_raw) if df_camp_raw is not None else None
     else:
-        df_camp = data.carregar_campeonato_cache(ARQUIVO_PADRAO)
+        df_camp_raw = planilha_gs.get('Jogos') if planilha_gs else None
+        df_camp = data.padronizar_campeonato(df_camp_raw)
 
+    # Escalações
     if up_esc:
         df_esc_raw = data.carregar_arquivo(up_esc)
         df_esc = data.padronizar_escalacoes(df_esc_raw) if df_esc_raw is not None else None
     else:
-        df_esc = data.carregar_escalacoes_cache(ARQUIVO_ESCALACOES)
+        df_esc_raw = planilha_gs.get('Escalações') if planilha_gs else None
+        df_esc = data.padronizar_escalacoes(df_esc_raw)
 
-    if df_camp is None:
-        st.sidebar.warning("⚠️ Arquivo 'dados_campeonato.xlsx' não encontrado.")
-        st.sidebar.info("Verifique se o arquivo foi enviado para o GitHub e se 'openpyxl' está no requirements.txt.")
+    if df_camp is None or df_camp.empty:
+        st.sidebar.warning("⚠️ Dados de campeonato não encontrados.")
+        st.sidebar.info("Verifique se a aba 'Jogos' existe na planilha do Google Sheets linkada no sistema e se há internet disponível.")
         st.title("🎩 Área de Competidores")
         st.warning("Dados não carregados. O sistema foi interrompido.")
         st.stop()
