@@ -362,7 +362,7 @@ def exibir_raio_x(df_temporada):
         c_fin = ['Rodada', 'Competição', '', 'Resultado', 'Sua Pont.', 'Pont. Adv.', 'Adversário']
         if 'Fase' in hist.columns: c_fin.insert(2, 'Fase')
         
-        st.dataframe(hist[c_fin].style.applymap(colorir, subset=['Resultado']).set_properties(**{'text-align': 'center'}), hide_index=True, use_container_width=True)
+        st.dataframe(hist[c_fin].style.map(colorir, subset=['Resultado']).set_properties(**{'text-align': 'center'}), hide_index=True, use_container_width=True)
     else:
         st.caption("Sem histórico de partidas concluídas.")
 
