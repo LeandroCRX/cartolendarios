@@ -27,7 +27,7 @@ def carregar_arquivo(uploaded_file):
 # FUNÇÕES CACHEADAS — Evitam releitura dos arquivos a cada interação do usuário
 # ==============================================================================
 
-@st.cache_data(ttl=600, show_spinner="⏳ Baixando dados do Google Sheets...")
+@st.cache_data(ttl=60000, show_spinner="⏳ Baixando dados do Google Sheets...")
 def carregar_dados_google_sheets(url: str):
     """Baixa o arquivo Excel completo do Google sheets."""
     try:
@@ -36,7 +36,7 @@ def carregar_dados_google_sheets(url: str):
         st.error(f"Erro ao acessar Google Sheets: {e}")
         return None
 
-@st.cache_data(ttl=600, show_spinner="⏳ Carregando dados dos campeonatos...")
+@st.cache_data(ttl=60000, show_spinner="⏳ Carregando dados dos campeonatos...")
 def carregar_campeonato_cache(caminho: str):
     """Carrega e padroniza o arquivo de campeonato com cache (10 minutos)."""
     df = carregar_arquivo(caminho)
@@ -44,7 +44,7 @@ def carregar_campeonato_cache(caminho: str):
         return None
     return padronizar_campeonato(df)
 
-@st.cache_data(ttl=600, show_spinner="⏳ Carregando escalações...")
+@st.cache_data(ttl=60000, show_spinner="⏳ Carregando escalações...")
 def carregar_escalacoes_cache(caminho: str):
     """Carrega e padroniza o arquivo de escalações com cache (10 minutos)."""
     df = carregar_arquivo(caminho)
